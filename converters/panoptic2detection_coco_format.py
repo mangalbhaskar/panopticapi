@@ -5,8 +5,22 @@ information about the formats can be found here:
 http://cocodataset.org/#format-data. All segments will be stored in RLE format.
 
 Additional option:
-- using option '--things_only' the script can discard all stuff
-segments, saving segments of things classes only.
+- using option
+    * '--things_only' the script can discard all stuff
+    segments, saving segments of things classes only.
+    * '--colors' whether from the PNG are used
+     or new colors are generated"
+
+Usage example(s):
+python converters/panoptic2detection_coco_format.py \
+  --input_json_file $AI_DATA/data/ms-coco/annotations/panoptic_val2017.json \
+  --output_json_file $AI_DATA/data/ms-coco/annotations/panoptic_instances_val2017.json \
+  --segmentations_folder $AI_DATA/data/ms-coco/panoptic_val2017
+
+python converters/panoptic2detection_coco_format.py \
+  --input_json_file $AI_DATA/data/ms-coco/annotations/panoptic_train2017.json \
+  --output_json_file $AI_DATA/data/ms-coco/annotations/panoptic_instances_train2017.json \
+  --segmentations_folder $AI_DATA/data/ms-coco/panoptic_train2017
 '''
 from __future__ import absolute_import
 from __future__ import division
@@ -68,7 +82,8 @@ def convert_panoptic_to_detection_coco_format(input_json_file,
                                               segmentations_folder,
                                               output_json_file,
                                               categories_json_file,
-                                              things_only):
+                                              things_only,
+                                              colors):
     start_time = time.time()
 
     if segmentations_folder is None:
@@ -115,7 +130,10 @@ def convert_panoptic_to_detection_coco_format(input_json_file,
         if things_only and category['isthing'] != 1:
             continue
         category.pop('isthing')
-        category.pop('color')
+        
+        if colors:
+            category.pop('color')
+        
         categories_coco_detection.append(category)
     d_coco['categories'] = categories_coco_detection
     with open(output_json_file, 'w') as f:
@@ -144,9 +162,13 @@ if __name__ == "__main__":
                         default='./panoptic_coco_categories.json')
     parser.add_argument('--things_only', action='store_true',
                         help="discard stuff classes")
+    parser.add_argument('--colors', action='store_true',
+                    help="whether from the PNG are used or new colors are generated")
     args = parser.parse_args()
+    
     convert_panoptic_to_detection_coco_format(args.input_json_file,
                                               args.segmentations_folder,
                                               args.output_json_file,
                                               args.categories_json_file,
-                                              args.things_only)
+                                              args.things_only,
+                                              args.colors)
